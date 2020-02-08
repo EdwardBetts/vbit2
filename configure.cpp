@@ -43,6 +43,8 @@ Configure::Configure(int argc, char** argv) :
 
     _rowAdaptive = false;
     _linesPerField = 16; // default to 16 lines per field
+    
+    _magazineSerial = false;
 
     _multiplexedSignalFlag = false; // using this would require changing all the line counting and a way to send full field through raspi-teletext - something for the distant future when everything else is done...
     
@@ -96,7 +98,7 @@ int Configure::LoadConfigFile(std::string filename)
 
     std::vector<std::string>::iterator iter;
     // these are all the valid strings for config lines
-    std::vector<std::string> nameStrings{ "header_template", "initial_teletext_page", "row_adaptive_mode", "network_identification_code", "country_network_identification", "full_field", "status_display", "subtitle_repeats","enable_command_port","command_port","lines_per_field","magazine_priority" };
+    std::vector<std::string> nameStrings{ "header_template", "initial_teletext_page", "row_adaptive_mode", "network_identification_code", "country_network_identification", "full_field", "status_display", "subtitle_repeats","enable_command_port","command_port","lines_per_field","magazine_priority","magazine_serial" };
 
     if (filein.is_open()){
         std::cerr << "[Configure::LoadConfigFile] opened " << filename << std::endl;
@@ -123,7 +125,6 @@ int Configure::LoadConfigFile(std::string filename)
                                 value.resize(32,' ');
                                 _headerTemplate.assign(value);
                                 break;
-
                             case 1: // initial_teletext_page
                                 if (value.size() >= 3){
                                     size_t idx;
@@ -162,7 +163,6 @@ int Configure::LoadConfigFile(std::string filename)
                                 }
                                 error = 1;
                                 break;
-
                             case 2: // row_adaptive_mode
                                 if (!value.compare("true")){
                                     _rowAdaptive = true;
@@ -250,34 +250,46 @@ int Configure::LoadConfigFile(std::string filename)
                                 }
                                 break;
                             case 11: // "magazine_priority"
-                                std::stringstream ss(value);
-                                std::string temps;
-                                int tmp[8];
-                                int i;
-                                for (i=0; i<8; i++)
                                 {
-                                    if (std::getline(ss, temps, ','))
+                                    std::stringstream ss(value);
+                                    std::string temps;
+                                    int tmp[8];
+                                    int i;
+                                    for (i=0; i<8; i++)
                                     {
-                                        try {
-                                            tmp[i] = stoi(temps);
-                                        } catch (const std::invalid_argument& ia) {
-                                            error = 1;
-                                            break;
+                                        if (std::getline(ss, temps, ','))
+                                        {
+                                            try {
+                                                tmp[i] = stoi(temps);
+                                            } catch (const std::invalid_argument& ia) {
+                                                error = 1;
+                                                break;
+                                            }
+                                            if (!(tmp[i] > 0 && tmp[i] < 10)) // must be 1-9
+                                            {
+                                                error = 1;
+                                                break;
+                                            }
                                         }
-                                        if (!(tmp[i] > 0 && tmp[i] < 10)) // must be 1-9
+                                        else
                                         {
                                             error = 1;
                                             break;
                                         }
                                     }
-                                    else
-                                    {
-                                        error = 1;
-                                        break;
-                                    }
+                                    for (i=0; i<8; i++)
+                                        _magazinePriority[i] = tmp[i];
+                                    break;
                                 }
-                                for (i=0; i<8; i++)
-                                    _magazinePriority[i] = tmp[i];
+                            case 12: // magazine_serial
+                                if (!value.compare("true")){
+                                    _magazineSerial = true;
+                                    std::cerr << "[Configure::LoadConfigFile] Magazine Serial mode enabled. This is not implemented yet" << std::endl;
+                                } else if (!value.compare("false")){
+                                    _magazineSerial = false;
+                                } else {
+                                    error = 1;
+                                }
                                 break;
                         }
                     } else {

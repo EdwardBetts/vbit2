@@ -49,6 +49,7 @@ public:
     uint8_t GetLinesPerField(){return _linesPerField;}
     bool GetReverseFlag(){return _reverseBits;}
     int GetMagazinePriority(uint8_t mag){return _magazinePriority[mag];}
+    bool GetMagazineSerial(){return _magazineSerial;};
 
 private:
 	int DirExists(char *path);
@@ -62,6 +63,7 @@ private:
 
 	bool _rowAdaptive;
     uint8_t _linesPerField;
+    bool _magazineSerial;
 	// settings for generation of packet 8/30
 	bool _multiplexedSignalFlag; 	// false indicates teletext is multiplexed with video, true means full frame teletext.
     int _magazinePriority[8];

@@ -388,7 +388,7 @@ void Packet::Header(unsigned char mag, unsigned char page, unsigned int subcode,
 
 	_packet[11]=HamTab[cbit]; // C7 to C10
 	cbit=(control & 0x0380) >> 6;	// Shift the language bits C12,C13,C14.
-	// if (control & 0x0040) cbit|=0x01;	// C11 serial/parallel *** We only work in parallel mode, Serial would mean a different packet ordering.
+	if (control & 0x0040) cbit|=0x01;	// C11 serial/parallel
 	_packet[12]=HamTab[cbit]; // C11 to C14 (C11=0 is parallel, C12,C13,C14 language)
 
 	_page=page;

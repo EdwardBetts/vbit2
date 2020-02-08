@@ -77,6 +77,12 @@ int Service::run()
 	// Send ONLY one packet per loop
 	_updateEvents();
 
+    if (_configure->GetMagazineSerial()){ // magazine serial service
+        /* rather than using the magazine priority, one magazine at a time should be marked as active. Once it reaches the end of its page list the service can move onto the next magazine. Special pages should go out once per cycle, ideally in page number sequence which would mean rewriting PacketMag::GetPacket again */
+        std::cout.write(filler->tx(), 42);
+    }
+    else // magazine parallel service
+    {
 		// Special case for subtitles. Subtitles always go if there is one waiting
 		if (_subtitle->IsReady())
 		{
@@ -86,7 +92,7 @@ int Service::run()
 				std::cout.write(filler->tx(), 42);
 			}
 		}
-	  else
+        else
 		{
 			// scan the rest of the available sources
 			do
@@ -135,6 +141,7 @@ int Service::run()
 				std::cout.write(filler->tx(), 42);
 			}
 		}
+    }
 
 	} // while forever
 	return 99; // can't return but this keeps the compiler happy
@@ -162,7 +169,8 @@ void Service::_updateEvents()
       if (seconds%15==0){ // how often do we want to trigger sending special packets?
         for (std::list<vbit::PacketSource*>::const_iterator iterator = _Sources.begin(), end = _Sources.end(); iterator != end; ++iterator)
         {
-          (*iterator)->SetEvent(EVENT_SPECIAL_PAGES);
+          if (!(_configure->GetMagazineSerial())) // set special pages event in parallel transmission
+            (*iterator)->SetEvent(EVENT_SPECIAL_PAGES); // TODO: make special pages go out each cycle in serial mode
           (*iterator)->SetEvent(EVENT_PACKET_29);
         }
       }

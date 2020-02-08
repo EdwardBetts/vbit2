@@ -142,7 +142,10 @@ Packet* PacketMag::GetPacket(Packet* p)
                 
                 if (_page == nullptr){
                     // couldn't get a page to send so sent a time filling header
-                    p->Header(_magNumber,0xFF,0x0000,0x8010);
+                    if (_configure->GetMagazineSerial())
+                        p->Header(_magNumber,0xFF,0x0000,0x8050);
+                    else
+                        p->Header(_magNumber,0xFF,0x0000,0x8010);
                     p->HeaderText(_configure->GetHeaderTemplate()); // Placeholder 32 characters. This gets replaced later
                     _waitingForField = 2; // enforce 20ms page erasure interval
                     return p;
@@ -192,6 +195,11 @@ Packet* PacketMag::GetPacket(Packet* p)
                 _page=nullptr;
                 return nullptr;
             }
+            
+            if (_configure->GetMagazineSerial())
+                _status |= PAGESTATUS_C11_SERIALMAG; // set magazine serial flag
+            else
+                _status &= ~PAGESTATUS_C11_SERIALMAG; // clear magazine serial flag
             
             _waitingForField = 2; // enforce 20ms page erasure interval
             
